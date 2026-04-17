@@ -25,7 +25,7 @@ curl -X https://day12-ha-tang-cloud-va-deployment.onrender.com/ask \
 ### 3. API Test (Có authentication X-API-Key)
 ```bash
 curl -X POST https://day12-ha-tang-cloud-va-deployment.onrender.com/ask \
-  -H "X-API-Key: dev-key-change-me" \
+  -H "X-API-Key: 66d2fdf910617b84f915801ee6d2472f" \
   -H "Content-Type: application/json" \
   -d '{"question": "Hello cloud platform!"}'
 ```
@@ -34,7 +34,7 @@ curl -X POST https://day12-ha-tang-cloud-va-deployment.onrender.com/ask \
 ## Environment Variables Đã Set up (Trên Cloud)
 - `PORT`
 - `ENVIRONMENT=production`
-- `AGENT_API_KEY=dev-key-change-me`
+- `AGENT_API_KEY=66d2fdf910617b84f915801ee6d2472f`
 - `RATE_LIMIT_PER_MINUTE=20`
 - `DAILY_BUDGET_USD=5.0`
 - `JWT_SECRET=super_secret_jwt`
