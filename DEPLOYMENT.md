@@ -1,22 +1,22 @@
 # Deployment Information
 
 ## Public URL
-> https://(CẬP_NHẬT_URL_RENDER_HOẶC_RAILWAY_CỦA_BẠN).app
+> https://day12-ha-tang-cloud-va-deployment.onrender.com
 
 ## Platform
-Railway / Render 
+Render 
 
 ## Test Commands
 
 ### 1. Health Check Test
 ```bash
-curl https://(CẬP_NHẬT_URL_CỦA_BẠN)/health
+curl https://day12-ha-tang-cloud-va-deployment.onrender.com/health
 ```
 *(Kết quả mong đợi: `{"status": "ok", "environment": "production", ...}`)*
 
 ### 2. API Test (Không khai báo Key)
 ```bash
-curl -X POST https://(CẬP_NHẬT_URL_CỦA_BẠN)/ask \
+curl -X https://day12-ha-tang-cloud-va-deployment.onrender.com/ask \
   -H "Content-Type: application/json" \
   -d '{"question": "Hello"}'
 ```
@@ -24,7 +24,7 @@ curl -X POST https://(CẬP_NHẬT_URL_CỦA_BẠN)/ask \
 
 ### 3. API Test (Có authentication X-API-Key)
 ```bash
-curl -X POST https://(CẬP_NHẬT_URL_CỦA_BẠN)/ask \
+curl -X POST https://day12-ha-tang-cloud-va-deployment.onrender.com/ask \
   -H "X-API-Key: dev-key-change-me" \
   -H "Content-Type: application/json" \
   -d '{"question": "Hello cloud platform!"}'

@@ -1,56 +1,52 @@
-# Day 12 Lab - Mission Answers
+# Day 12 Lab - Mission Answers & Final Report
 
-## Part 1: Localhost vs Production
+**Student Name:** Đỗ Trọng Minh
+**Topic:** Cloud Infrastructure & AI Agent Deployment
 
-### Exercise 1.1: Anti-patterns found in Develop version
-1. API Key và mật khẩu bị Hardcode trực tiếp vào source code.
-2. Port chạy ứng dụng bị set cứng, không thể tùy chọn linh hoạt.
-3. Thiết lập Debug=True khi chạy ở môi trường thực tế (Leak thông tin lỗi).
-4. Không có API Health Check (`/health`) để theo dõi sức khoẻ khi container chạy lỗi.
-5. Thiếu quy trình đóng ứng dụng an toàn (Graceful Shutdown), ngắt thẳng khi có tín hiệu tắt khiến request bị rớt.
+---
 
-### Exercise 1.3: Comparison table
+## Part 1: Localhost vs Production (12-Factor App)
 
-| Feature | Basic (Develop) | Advanced (Production) | Tại sao quan trọng? |
-|---------|-----------------|-----------------------|---------------------|
-| Config | Hardcode | Env vars (.env) | Đảm bảo bảo mật thông tin nhạy cảm, dễ cấu hình trên Cloud mà không cần đổi code. |
-| Health check | Không có | Có (/health) | Giúp Docker hoặc Platform giám sát và tự động Restart container nếu app bị treo cứng. |
-| Logging | print() | JSON format | Dễ dàng tìm kiếm truy vấn log bằng các công cụ như Kibana, CloudWatch, bao gồm cả timestamp chuẩn. |
-| Shutdown | Đột ngột | Graceful | Duy trì kết nối hiện tại cho xong request rồi mới tắt hẳn, không gây ra lỗi HTTP 5xx từ phía user. |
+### Exercise 1.1: Anti-patterns found in Basic version
+1. **Hardcoded Secrets:** API Keys nằm trực tiếp trong code, dễ bị lộ khi push lên Git.
+2. **Fixed Port:** Sử dụng port 8000 cố định, không thể thay đổi theo môi trường của Cloud provider.
+3. **Debug Mode:** Luôn bật debug khiến hacker có thể xem được cấu trúc code khi gặp lỗi.
+4. **No Healthchecks:** Không có cơ chế báo cáo tình trạng sống còn cho Orchestrator (Docker/Cloud).
+5. **Sudden Shutdown:** App bị tắt đột ngột, làm treo các request đang xử lý dở.
 
+### Exercise 1.3: Comparison Table
 
-## Part 2: Docker
+| Feature | Develop | Production | Importance |
+|---------|---------|------------|------------|
+| Config  | Hardcoded | Environment Variables | Bảo mật và linh hoạt khi deploy đa môi trường. |
+| Health  | N/A | `/health` & `/ready` | Tự động hóa việc giám sát và khôi phục dịch vụ. |
+| Logging | `print()` | Structured JSON | Dễ dàng quản lý và truy vết log trên quy mô lớn. |
+| Shutdown | Abrupt | Graceful (SIGTERM) | Không làm gián đoạn trải nghiệm người dùng khi cập nhật app. |
 
-### Exercise 2.1: Dockerfile questions
-1. Base image là gì?: `python:3.11-slim`
-2. Working directory là gì?: `/app`
-3. Tại sao COPY requirements.txt trước?: Tận dụng caching của Docker. Nếu source code thay đổi nhưng thư viện vẫn vậy thì không cần tải lại các module, giúp build nhanh hơn.
-4. CMD vs ENTRYPOINT khác nhau thế nào?: ENTRYPOINT coi container như một chương trình thực thi với cội nguồn cố định. Còn CMD khởi tạo các định nghĩa tham số mặc định và có thể bị ghi đè lên lúc gọi lệnh `docker run`.
+## Part 2: Docker Containerization
 
-### Exercise 2.3: Image size comparison (Multi-stage)
-* Develop Image Size: To vì chứa các file build dependencies và C-compiler dư thừa.
-* Production Image Size (Multi-stage build): Rất nhỏ (< 200MB) vì stage sau cùng chỉ copy thư viện đã được build mà không kèm source gốc của system build nữa.
+### Exercise 2.1 & 2.3: Docker Optimizations
+- **Multi-stage Build:** Đã triển khai Dockerfile 2 giai đoạn. Stage 1 dùng để build thư viện, Stage 2 chỉ copy kết quả cuối cùng. 
+- **Kết quả:** Dung lượng Image được tối ưu đáng kể (giảm từ mức >500MB xuống còn khoảng ~200MB) và loại bỏ được các lỗi bảo mật từ các công cụ build.
+- **Non-root user:** Ứng dụng chạy dưới user `agent`, giảm thiểu rủi ro bị tấn công chiếm quyền root của hệ thống.
 
+## Part 4 & 5: Security & Scaling (Local Verification)
 
-## Part 3: Cloud Deployment
+### Test Results (Verified on Local Docker)
+1. **Authentication:** 
+   - Gọi API không key: Trả về `401 Unauthorized` (Thành công).
+   - Gọi API đúng key (`dev-key-change-me-in-production`): Trả về kết quả AI (Thành công).
+2. **Rate Limiting:** Khi gọi liên tục >20 request/phút, hệ thống tự động trả về lỗi `429 Rate limit exceeded`.
+3. **Stateless Design:** Đã kiểm tra việc tắt container và khởi động lại, dữ liệu hội thoại vẫn được đồng bộ qua Redis giúp hệ thống có thể Scale-out lên nhiều bản sao mà không mất dữ liệu.
 
-### Exercise 3.1: Railway / Render deployment
-- Deploy thành công thông qua việc upload source code và chỉ định file `railway.toml` hoặc `render.yaml`.
-- Hệ thống trên Cloud tự động override số thứ tự PORT qua môi trường (Environment Variable).
+---
 
+## Part 6: Final Deployment & Troubleshooting Notes
 
-## Part 4: API Security
+Trong quá trình thực hiện Part 6, em đã phát hiện và xử lý các vấn đề thực tế sau để đưa ứng dụng đạt chuẩn Production:
+1. **Fix PYTHONPATH:** Điều chỉnh lại Dockerfile để đường dẫn thư viện Python chính xác trong multi-stage build, khắc phục lỗi `ModuleNotFoundError: uvicorn`.
+2. **Fix Header Deletion:** Sửa lỗi `AttributeError` khi xóa Header "server" bằng cách sử dụng phương thức xóa trực tiếp trên MutableHeaders, giúp app hoàn thành middleware bảo mật.
+3. **Environment Setup:** Cấu hình file `.env.local` đồng nhất với các tham số trên Cloud Render.
 
-### Exercise 4.1-4.3: Test results
-- Auth Check: Khi không thêm `<X-API-Key>`, gọi request POST tới `/ask` trả về `HTTP 401 Unauthorized`. Thêm header đúng key thì nhận kết quả response 200.
-- Rate Limit check: Áp dụng gọi curl API vượt quá 20 lần trong vòng 1 phút thì Request sẽ trả về HTTP 429 (Rate Limit Exceeded). Ngăn spam hệ thống.
-
-### Exercise 4.4: Cost guard implementation
-- Hệ thống tính toán sử dụng lượng Token Input và Output của LLM để tính ra USD. Biến lưu được cộng dần lên thành Daily Cost trong Redis (hoặc in-memory dictionary). Ở đầu mỗi request gọi API, code sẽ kiểm tra chi phí hiện tại, nếu `total >= BUDGET`, quăng lỗi `HTTP 503` bắt client làm lại sau.
-
-
-## Part 5: Scaling & Reliability
-
-### Exercise 5.1-5.5: Implementation notes
-- Thiết lập Redis và Nginx Load Balancer bằng `docker-compose.yml`. Tách biệt toàn bộ trạng thái ghi nhớ hội thoại ra khỏi app FastAPI (stateless app) vào Redis database.
-- Scalability: Khi scale app theo cấp số nhân thành nhiều replicas (`docker compose --scale agent=3`), load balancer trải đều lưu lượng, khi 1 instance crash thì request sau vào node khác vẫn không bị rớt dữ liệu session. Mọi hệ thống đều thông suốt.
+---
+**Kết luận:** Hệ thống đã vượt qua 100% (20/20) các bài kiểm tra của script `check_production_ready.py` và đã sẵn sàng chạy ổn định trên Cloud.
